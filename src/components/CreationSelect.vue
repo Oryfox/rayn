@@ -4,44 +4,41 @@
       <div class="modalheader">
         <span v-if="getInput">Enter artist name and album title</span>
         <span v-else>Select filling mode</span>
-        <button class="btn btn-close" @click="cancel"></button>
+        <SidebarButton style="margin-left:auto" @click="cancel">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+            <path
+              d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+          </svg>
+        </SidebarButton>
       </div>
       <div class="modal-content-pane">
         <div class="input-holder" v-if="getInput">
           <div class="property">
-            <input
-              type="text"
-              id="title"
-              class="inputfield"
-              v-model="this.artist"
-              @keyup.enter="submit"
-              @keydown="resetMessage"
-              placeholder="Artist name"
-            />
+            <input type="text" id="title" class="inputfield" v-model="this.artist" @keyup.enter="submit"
+              @keydown="resetMessage" placeholder="Artist name" />
           </div>
           <div class="property">
-            <input
-              type="text"
-              id="title"
-              class="inputfield"
-              v-model="this.title"
-              @keyup.enter="submit"
-              @keydown="resetMessage"
-              placeholder="Album title"
-            />
+            <input type="text" id="title" class="inputfield" v-model="this.title" @keyup.enter="submit"
+              @keydown="resetMessage" placeholder="Album title" />
           </div>
           <span class="message" v-if="message">{{ message }}</span>
 
           <div class="confirm-group">
-            <button class="btn btn-secondary" @click="automatic">Cancel</button>
-            <button class="btn btn-primary" @click="submit">Submit</button>
+            <SidebarButton @click="automatic">
+              <h3>Cancel</h3>
+            </SidebarButton>
+            <SidebarButton @click="submit">
+              <h3>Submit</h3>
+            </SidebarButton>
           </div>
         </div>
-        <div class="btn-group" v-else>
-          <button class="btn btn-primary" @click="automatic">Automatic</button>
-          <button class="btn btn-outline-primary" @click="manual">
-            Manual
-          </button>
+        <div class="button-wrapper" v-else>
+          <SidebarButton @click="automatic" class="button">
+            <h2>Automatic</h2>
+          </SidebarButton>
+          <SidebarButton @click="manual" class="button">
+            <h2>Manual</h2>
+          </SidebarButton>
         </div>
       </div>
     </div>
@@ -50,6 +47,7 @@
 
 <script>
 import ES from "../plugins/eventService";
+import SidebarButton from "./SidebarButton.vue";
 
 export default {
   props: {
@@ -89,21 +87,23 @@ export default {
               this.record.releaseYear = newrec.releaseYear;
               this.record.tracks = newrec.tracks;
               this.record.imageType = newrec.imageType;
-
               this.getInput = false;
               this.artist = "";
               this.title = "";
               this.$emit("success");
             });
-          } else {
+          }
+          else {
             if (res.status === 404) {
               alert("No album could be found");
-            } else {
+            }
+            else {
               alert("Whoops.. Something went wrong");
             }
           }
         });
-      } else {
+      }
+      else {
         this.message = "Artist and Title must contain a value";
       }
     },
@@ -111,6 +111,7 @@ export default {
       this.message = null;
     },
   },
+  components: { SidebarButton }
 };
 </script>
 
@@ -126,17 +127,19 @@ export default {
   justify-content: center;
   z-index: 10;
   backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background-color: rgba(255, 255, 255, 3%);
 }
+
 .modal-pane {
   width: 40%;
   margin: 2.5rem 0;
-  box-shadow: 2px 2px 13px 2px rgba(0, 0, 0, 0.2);
+  border: solid thin var(--color-border);
   border-radius: 1rem;
-  background-color: white;
+  background-color: var(--color-background-soft);
   display: flex;
   flex-direction: column;
 }
+
 .modal-content-pane {
   padding: 1rem;
   position: relative;
@@ -145,8 +148,24 @@ export default {
   flex-direction: column;
   overflow-y: scroll;
 }
+
+.button-wrapper {
+  display: flex;
+  width: 100%;
+  gap: 1rem;
+}
+
+.button {
+  height: 2rem;
+  flex: 1;
+  text-align: center;
+  border: solid thin var(--color-border);
+  background-color: var(--color-background-soft);
+  justify-content: center;
+}
+
 .modalheader {
-  background: #f0f0f0;
+  background: var(--color-background);
   border-top-left-radius: 1rem;
   border-top-right-radius: 1rem;
   display: flex;
@@ -155,42 +174,14 @@ export default {
   height: 4rem;
   font-size: 24px;
 }
-.btn-close {
-  margin-left: auto;
-}
+
 .btn-primary {
   background: var(--bright-color);
   border-color: var(--bright-color);
 }
+
 .btn-primary:focus {
   box-shadow: 1px 1px 10px 1px var(--bright-color);
-}
-.btn-outline-primary {
-  border-color: var(--bright-color);
-  color: var(--bright-color);
-}
-.btn-outline-primary:hover {
-  background: #f0f0f0;
-}
-.btn-outline-primary:focus {
-  box-shadow: 1px 1px 10px 1px var(--bright-color);
-}
-
-.confirm-group .btn-primary {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: var(--text-color);
-}
-.confirm-group .btn-primary:focus {
-  box-shadow: 1px 1px 10px 1px var(--primary-color);
-}
-.confirm-group .btn-secondary {
-  color: var(--text-color);
-  border-color: var(--secondary-color);
-  background: var(--secondary-color);
-}
-.confirm-group .btn-secondary:focus {
-  box-shadow: 1px 1px 10px 1px var(--secondary-color);
 }
 
 .input-holder {
@@ -198,40 +189,51 @@ export default {
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .property {
   display: flex;
   align-items: center;
   flex-direction: row;
 }
+
 .property .inputfield {
   margin-left: auto;
   flex-grow: 1;
 }
+
 .property label {
   width: 10rem;
   text-align: right;
   padding-right: 0.7rem;
 }
+
 .confirm-group {
   margin-left: auto;
   display: flex;
   gap: 0.5rem;
+  height: 3rem;
 }
+
 .message {
   color: red;
   font-size: 0.8rem;
 }
+
 input[type*="text"] {
+  border: solid thin var(--color-border);
   border-radius: 0.5rem;
-  border: solid thin rgba(0, 0, 0, 0.2);
   padding: 0.2rem 0.5rem;
-  color: rgba(0, 0, 0, 0.7);
-  caret-color: rgba(0, 0, 0, 0.4);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  caret-color: var(--color-text);
+  height: 2rem;
+  font-size: 16px;
 }
+
 input[type*="text"]:focus {
   outline: none !important;
+  border: solid thin var(--color-border);
+  background-color: var(--color-background-mute);
   border-radius: 0.5rem;
-  border: solid thin rgba(0, 0, 0, 0.2);
-  box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.2);
 }
 </style>

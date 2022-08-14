@@ -13,6 +13,8 @@
     transition-duration: 0.3s;
     padding: 0.4rem;
     cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .button-base:hover {

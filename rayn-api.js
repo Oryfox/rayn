@@ -1,9 +1,11 @@
 const { app } = require('electron');
 const express = require('express');
 const DataStore = require('nedb');
+const multer = require('multer');
+const upload = multer({ dest: app.getPath('userData') + '/uploads/' });
 const path = require('path');
 const lastFmSecret = 'abf7626b0ae925ff1ed6ba562b64487b';
-const fetch = require('node-fetch');
+const fetch = require('electron-fetch').default;
 const storage = app.getPath('userData') + '/storage.json'
 const fs = require('fs');
 const imagePath = app.getPath('userData') + '/images/'
@@ -18,6 +20,21 @@ async function setup() {
         db.find({}, (err, docs) => {
             res.json(docs);
         })
+    })
+
+    app.post('/record/image', upload.single('file'), (req, res) => {
+        if (req.file.mimetype.startsWith('image/')) {
+            fs.unlinkSync(imagePath + req.query.id)
+            fs.renameSync(req.file.path, imagePath + req.query.id)
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(415);
+        }
+    })
+
+    app.delete('/record/image', (req, res) => {
+        fs.unlinkSync(imagePath + req.query.id)
+        res.sendStatus(200);
     })
 
     app.get('/record/image', (req, res) => {
@@ -56,6 +73,29 @@ async function setup() {
         })
     })
 
+    app.get('/record/auto', async (req, res) => {
+        getAlbumInfo(req.query.artist, req.query.title)
+            .then(response => response.json())
+            .then(json => {
+                const album = json.album
+                const record = {
+                    artist: album.artist,
+                    title: album.name,
+                    releaseYear: 1980,
+                    tracks: album.tracks.track.map(t => {
+                        return {
+                            title: t.name,
+                            rank: t['@attr'].rank
+                        }
+                    }),
+                    limited: false,
+                    bootleg: false,
+                    color: 'Black'
+                }
+                res.json(record)
+            })
+    })
+
     app.post("/record", (req, res) => {
         console.log(req.body);
         db.insert(req.body, (err, newDoc) => {
@@ -67,9 +107,34 @@ async function setup() {
         })
     })
 
+    app.put('/record', (req, res) => {
+        db.update({ _id: req.body._id }, { $set: req.body }, {}, (err, numReplaced) => {
+            if (err) {
+                res.status(500).send(err)
+            } else {
+                res.sendStatus(200)
+            }
+        })
+    })
+
+    app.delete('/record', (req, res) => {
+        fs.unlinkSync(imagePath + req.query.id)
+        db.remove({ _id: req.query.id }, {}, (err) => {
+            if (err) {
+                res.status(500).send(err)
+            } else {
+                res.sendStatus(200)
+            }
+        })
+    })
+
     app.listen(port, () => {
         console.log(`API started on port ${port}`)
     })
+}
+
+function getAlbumInfo(artist, album) {
+    return fetch('https://ws.audioscrobbler.com/2.0/?method=album.getInfo&api_key=' + lastFmSecret + '&artist=' + artist + '&album=' + album + '&format=json')
 }
 
 module.exports = {

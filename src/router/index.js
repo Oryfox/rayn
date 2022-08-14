@@ -35,21 +35,6 @@ const router = createRouter({
       path: "/artist/:name",
       name: "artistdetail",
       component: () => import("../views/ArtistDetailView.vue")
-    },
-    {
-      path: "/login",
-      name: "login",
-      component: () => import("../views/LoginView.vue")
-    },
-    {
-      path: "/logout",
-      name: "logout",
-      component: () => import("../views/LogoutView.vue")
-    },
-    {
-      path: "/profile",
-      name: "profile",
-      component: () => import("../views/ProfileView.vue")
     }
   ]
 })

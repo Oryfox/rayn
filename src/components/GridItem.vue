@@ -46,8 +46,8 @@ img {
   border-radius: 0.5rem;
   margin-bottom: 0.5rem;
   transition-duration: 0.3s;
-  width: 16rem;
-  height: auto;
+  max-width: 16rem;
+  max-height: auto;
   background-color: gray;
 }
 

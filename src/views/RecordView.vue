@@ -11,15 +11,22 @@
 
       <div class="searchField">
         <label for="searchField"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-            class="bi bi-search" viewBox="0 0 16 16">
+            viewBox="0 0 16 16">
             <path
               d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
           </svg></label>
         <input id="searchField" type="text" v-model="search" placeholder="Search..." @keyup="emitSearch" />
       </div>
+
+      <SidebarButton class="createRecordButton" @click="toggleNewRecordModal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+          <path
+            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
+        </svg>
+      </SidebarButton>
     </div>
 
-    <div v-if="records.length > 0">
+    <div class="grid-wrapper" v-if="records.length > 0">
       <div class="grid">
         <GridItem v-for="record in searchRecords" :key="record._id" :record="record" />
       </div>
@@ -51,12 +58,14 @@ import ES from "../plugins/eventService";
 import emitter from "tiny-emitter/instance";
 import GridItem from "../components/GridItem.vue";
 import Selector from "../components/Selector.vue";
+import SidebarButton from "../components/SidebarButton.vue";
 export default {
   components: {
     EditPopup,
     CreationSelect,
     GridItem,
     Selector,
+    SidebarButton
   },
   data() {
     return {
@@ -170,14 +179,17 @@ export default {
 .root {
   display: flex;
   flex-direction: column;
+  max-height: calc(100vh - 0.5rem);
+}
+
+.grid-wrapper {
+  overflow-y: scroll;
 }
 
 .grid {
   display: inline-flex;
   flex-wrap: wrap;
-  padding: 0.5rem 0 0 0.5rem;
-  gap: 1.5rem;
-  flex: 0 1;
+  gap: 0.5rem 1rem;
   justify-content: center;
 }
 
@@ -190,6 +202,8 @@ export default {
   border-radius: 0.5rem;
   background-color: var(--color-background-soft);
   height: 3rem;
+  z-index: 1;
+  margin-bottom: 0.5rem;
 }
 
 .record-list-empty {

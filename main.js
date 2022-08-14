@@ -22,7 +22,6 @@ function createWindow() {
         store.set('height', win.getSize()[1]);
         store.set('fullscreen', win.isFullScreen());
     });
-    win.webContents.openDevTools()
 }
 
 app.whenReady()
@@ -59,6 +58,18 @@ function setMainMenu() {
                         app.quit();
                     }
                 }
+            ]
+        },
+        {
+            label: 'View',
+            submenu: [
+                {
+                    label: 'Toggle Dev Tools',
+                    accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+                    click(item, focusedWindow) {
+                        focusedWindow.toggleDevTools();
+                    }
+                },
             ]
         }
     ];

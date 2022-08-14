@@ -7,7 +7,7 @@
             d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z" />
         </svg>
       </SidebarButton>
-      <SidebarButton style="margin-left:auto">
+      <SidebarButton style="margin-left:auto" @click="toggleEditModal">
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
           <path
             d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
@@ -15,7 +15,7 @@
             d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
         </svg>
       </SidebarButton>
-      <SidebarButton class="trash-button">
+      <SidebarButton class="trash-button" @click="toggleDeleteModal">
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
           <path
             d="M2.037 3.225A.703.703 0 0 1 2 3c0-1.105 2.686-2 6-2s6 .895 6 2a.702.702 0 0 1-.037.225l-1.684 10.104A2 2 0 0 1 10.305 15H5.694a2 2 0 0 1-1.973-1.671L2.037 3.225zm9.89-.69C10.966 2.214 9.578 2 8 2c-1.58 0-2.968.215-3.926.534-.477.16-.795.327-.975.466.18.14.498.307.975.466C5.032 3.786 6.42 4 8 4s2.967-.215 3.926-.534c.477-.16.795-.327.975-.466-.18-.14-.498-.307-.975-.466z" />
@@ -30,7 +30,7 @@
           <img :src="this.baseUrl + 'record/image?id=' + this.record._id" alt="" :class="
             'foreground coverimage' +
             (record.imageType === 'DEFAULT' ? ' noborder' : '')
-          " id="foreground" @load="applyBorder" @click="selectImage" />
+          " id="foreground" @load="applyBorder" @contextmenu="toggleContextMenu" />
         </div>
 
         <div>
@@ -82,24 +82,30 @@
       <input type="file" id="upload" style="display: none" @change="uploadSubmit" />
     </div>
     <div v-else>Loading...</div>
+
+    <div class="image-context-menu-wrapper disabled" @click="toggleContextMenu">
+      <div class="image-context-menu" v-on:click.stop>
+        <SidebarButton @click="selectImage">
+          <h3>Upload new image</h3>
+        </SidebarButton>
+        <SidebarButton @click="resetImage">
+          <h3>Reset image</h3>
+        </SidebarButton>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
 import EditPopup from "../components/EditPopup.vue";
-import DeletePopup from "../components/DeletePopup.vue";
 import ES from "../plugins/eventService";
-import PrimaryButton from "../components/PrimaryButton.vue";
-import SecondaryButton from "../components/SecondaryButton.vue";
 import emitter from "tiny-emitter/instance";
 import SidebarButton from "../components/SidebarButton.vue";
 
 export default {
   components: {
     EditPopup,
-    DeletePopup,
-    PrimaryButton,
-    SecondaryButton,
     SidebarButton,
   },
   data() {
@@ -118,6 +124,12 @@ export default {
         .then((res) => res.json())
         .then((data) => {
           this.record = data
+          if (this.record.limited === undefined) {
+            this.record.limited = false;
+          }
+          if (this.record.bootleg === undefined) {
+            this.record.bootleg = false;
+          }
           console.log(data);
         })
         .catch((error) => console.log(error));
@@ -132,12 +144,22 @@ export default {
       this.$router.push("/artists/" + this.record.artist);
     },
     selectImage() {
+      this.hideContextMenu();
       document.getElementById("upload").click();
+    },
+    hideContextMenu() {
+      document.getElementsByClassName("image-context-menu-wrapper")[0].classList.toggle("disabled");
+    },
+    toggleContextMenu(evt) {
+      let element = document.getElementsByClassName("image-context-menu")[0]
+      document.getElementsByClassName("image-context-menu-wrapper")[0].classList.toggle("disabled");
+      element.style.top = evt.clientY + "px";
+      element.style.left = evt.clientX + "px";
     },
     uploadSubmit() {
       var formdata = new FormData();
       formdata.append("file", document.getElementById("upload").files[0]);
-      ES.postRecordImage(this.record.id, formdata).then((res) => {
+      ES.postRecordImage(this.record._id, formdata).then((res) => {
         if (res.ok) {
           document.getElementById("upload").value = "";
           const elements = document.getElementsByClassName("coverimage");
@@ -177,7 +199,9 @@ export default {
       }
     },
     toggleDeleteModal() {
-      document.getElementById("delete-modal").classList.toggle("disabled");
+      if (confirm("Are you sure you want to delete this record?")) {
+        this.deleteRecord();
+      }
     },
     cancelEdit() {
       this.record = this.originalRecord;
@@ -196,7 +220,7 @@ export default {
         .catch((error) => console.log(error));
     },
     deleteRecord() {
-      ES.deleteRecord(this.record.id).then((response) => {
+      ES.deleteRecord(this.record._id).then((response) => {
         if (response.ok) {
           this.$router.push("/records");
         } else {
@@ -204,30 +228,24 @@ export default {
         }
       });
     },
-    deleteImage(none) {
-      ES.deleteRecordImage(this.record.id, none)
-        .then((res) => {
-          const elements = document.getElementsByClassName("coverimage");
-          for (let index = 0; index < elements.length; index++) {
-            const element = elements[index];
-            element.src = element.src + "&t=" + new Date().getTime();
-          }
-          if (!none)
-            document
-              .getElementsByClassName("coverimage")[1]
-              .classList.add("noborder");
-          else
+    resetImage() {
+      this.hideContextMenu();
+      ES.resetRecordImage(this.record._id)
+        .then(res => {
+          if (res.ok) {
+            const elements = document.getElementsByClassName("coverimage");
+            for (let index = 0; index < elements.length; index++) {
+              const element = elements[index];
+              element.src = element.src + "&t=" + new Date().getTime();
+            }
+            this.applyBlur();
+            this.applyBorder();
             document
               .getElementsByClassName("coverimage")[1]
               .classList.remove("noborder");
-          this.applyBlur();
-          this.applyBorder();
-          if (!res.ok) {
-            alert("Sorry, that did not work");
           }
         })
-        .catch(() => alert("Sorry, that did not work"));
-    },
+    }
   },
 };
 </script>
@@ -240,6 +258,7 @@ export default {
   border: solid thin var(--color-border);
   border-radius: 0.5rem;
   background-color: var(--color-background-soft);
+  position: relative;
 }
 
 .top-bar {
@@ -255,6 +274,33 @@ export default {
 .image {
   width: 100%;
   position: relative;
+}
+
+.image-context-menu-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+}
+
+.image-context-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  position: absolute;
+  width: 220px;
+  background-color: var(--color-background-soft);
+  border: solid thin var(--color-border);
+  border-radius: 0.5rem;
+}
+
+.image-context-menu * {
+  flex: 1;
+  align-items: center;
+  text-align: center;
 }
 
 .left-split {
@@ -314,7 +360,7 @@ export default {
   position: relative;
   width: 85%;
   transition: border-radius 2s transform 0.5s;
-  border: solid thin rgba(0, 0, 0, 0.2);
+  border: solid thin var(--color-border);
 }
 
 .foreground-blur {
