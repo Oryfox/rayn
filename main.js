@@ -35,24 +35,7 @@ function createWindow() {
 app.whenReady()
     .then(() => startAPI())
     .then(() => {
-        ipcMain.on("quit", () => {
-            if (dialog.showMessageBoxSync(BrowserWindow.getAllWindows()[0], {
-                buttons: ["Yes", "No"],
-                message: "Are you sure you want to quit?"
-            }) === 0) {
-                app.quit();
-            }
-        })
-        ipcMain.on('github', () => {
-            shell.openExternal("https://github.com/Oryfox/rayn")
-        })
-        ipcMain.on('youtube', (event, query) => {
-            fetch("https://yt.oryfox.de/?query=" + query)
-                .then(response => response.json())
-                .then(json => {
-                    shell.openExternal(json[0].url)
-                })
-        })
+        setupInterProcessCommunication();
         setMainMenu();
         createWindow();
 
@@ -99,4 +82,56 @@ function setMainMenu() {
     } else {
         Menu.setApplicationMenu(null);
     }
+}
+
+function setupInterProcessCommunication() {
+    ipcMain.on("quit", () => {
+        if (dialog.showMessageBoxSync(BrowserWindow.getAllWindows()[0], {
+            buttons: ["Yes", "No"],
+            message: "Are you sure you want to quit?"
+        }) === 0) {
+            app.quit();
+        }
+    })
+    ipcMain.on('github', () => {
+        shell.openExternal("https://github.com/Oryfox/rayn")
+    })
+    ipcMain.on('youtube', (event, query) => {
+        fetch("https://yt.oryfox.de/?query=" + query)
+            .then(response => response.json())
+            .then(json => {
+                shell.openExternal(json[0].url)
+            })
+    })
+    ipcMain.on('devtools', () => {
+        BrowserWindow.getAllWindows()[0].webContents.toggleDevTools()
+    })
+    ipcMain.on('set-token', (event, token) => {
+        store.set('token', token);
+    })
+    ipcMain.handle('get-token', () => {
+        return store.get('token');
+    })
+    ipcMain.on('delete-token', () => {
+        store.delete('token');
+    })
+    ipcMain.on('reset-database', () => {
+        if (dialog.showMessageBoxSync(BrowserWindow.getAllWindows()[0], {
+            buttons: ["Yes", "No"],
+            message: "Are you sure you want to reset the database?"
+        }) === 0) {
+            const fs = require('fs')
+            fs.unlinkSync(app.getPath('userData') + '/storage.json')
+            fs.readdirSync(app.getPath('userData') + '/images').forEach(file => {
+                fs.unlinkSync(app.getPath('userData') + '/images/' + file)
+            })
+            store.clear();
+            dialog.showMessageBoxSync(BrowserWindow.getAllWindows()[0], {
+                buttons: ["Ok"],
+                message: "The database has been reset. The app restarts now."
+            })
+            app.quit();
+            app.relaunch();
+        }
+    })
 }

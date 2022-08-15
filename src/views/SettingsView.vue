@@ -10,37 +10,124 @@
                 <SidebarButton>
                     <h5>Upload</h5>
                 </SidebarButton>
-                <SidebarButton>
-                    <h5>Clone cloud version</h5>
+                <SidebarButton @click="importRecords">
+                    <h5>Import</h5>
                 </SidebarButton>
-                <SidebarButton>
+                <SidebarButton @click="logout">
                     <h5>Logout</h5>
                 </SidebarButton>
             </div>
             <div class="form" v-else>
                 <input type="text" ref="email" placeholder="Email">
-                <input type="password" ref="email" placeholder="Password">
-                <SidebarButton class="login-button">
+                <input type="password" ref="password" placeholder="Password">
+                <SidebarButton class="login-button" @click="login">
                     <h5>Login</h5>
                 </SidebarButton>
             </div>
         </div>
+        <div class="option">
+            <h3>Reset options</h3>
+            <SidebarButton @click="resetDatabase">
+                <h5>Reset database</h5>
+            </SidebarButton>
+        </div>
+        <SidebarButton @click="toggleDevTools">
+            Toggle dev tools
+        </SidebarButton>
     </div>
 </template>
 
 <script>
+import ES from '../plugins/eventService'
 import SidebarButton from "../components/SidebarButton.vue";
 export default {
     data() {
         return {
-            isLoggedIn: null
+            isLoggedIn: null,
+            token: null
         };
     },
     created() {
-        if (this.$cookies.get("token")) {
-            this.isLoggedIn = true;
-        } else {
+        electronAPI.getToken()
+            .then(token => {
+                if (token) {
+                    this.isLoggedIn = true;
+                    this.token = token;
+                } else {
+                    this.isLoggedIn = false;
+                }
+            });
+    },
+    methods: {
+        login() {
+            fetch('https://vinyl.oryfox.de/api/user/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: this.$refs.email.value,
+                    password: this.$refs.password.value
+                })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.text()
+                    } else {
+                        throw new Error('Login failed');
+                    }
+                })
+                .then(data => {
+                    electronAPI.setToken(data);
+                    this.token = data;
+                    this.isLoggedIn = true;
+                });
+        },
+        logout() {
+            let token = this.$cookies.get("token")
+            fetch('https://vinyl.oryfox.de/api/user/logout', {
+                method: 'PUT',
+                headers: {
+                    'token': token
+                }
+            })
+            electronAPI.deleteToken();
             this.isLoggedIn = false;
+            this.token = null;
+        },
+        toggleDevTools() {
+            electronAPI.devtools();
+        },
+        importRecords() {
+            fetch('https://vinyl.oryfox.de/api/record', {
+                headers: {
+                    'token': this.token
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json()
+                    } else {
+                        if (response.status === 401) {
+                            this.isLoggedIn = false;
+                            this.token = null;
+                        }
+                        throw new Error('Import failed');
+                    }
+                })
+                .then(data => {
+                    this.syncImport(data);
+                });
+
+        },
+        syncImport(data) {
+            data.forEach(async record => {
+                await ES.postRecord(record);
+            })
+            alert("Import successful");
+        },
+        resetDatabase() {
+            electronAPI.resetDatabase();
         }
     },
     components: { SidebarButton }
@@ -48,6 +135,12 @@ export default {
 </script>
 
 <style scoped>
+.collection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
 h1 {
     width: 100%;
     margin-bottom: 1rem;
