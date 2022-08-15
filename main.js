@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const { startAPI } = require("./rayn-api");
 const Store = require("electron-store");
@@ -36,7 +36,12 @@ app.whenReady()
     .then(() => startAPI())
     .then(() => {
         ipcMain.on("quit", () => {
-            app.quit();
+            if (dialog.showMessageBoxSync(BrowserWindow.getAllWindows()[0], {
+                buttons: ["Yes", "No"],
+                message: "Are you sure you want to quit?"
+            }) === 0) {
+                app.quit();
+            }
         })
         ipcMain.on('github', () => {
             shell.openExternal("https://github.com/Oryfox/rayn")
@@ -48,8 +53,8 @@ app.whenReady()
                     shell.openExternal(json[0].url)
                 })
         })
-        createWindow();
         setMainMenu();
+        createWindow();
 
         app.on("activate", () => {
             if (BrowserWindow.getAllWindows().length === 0) {
@@ -63,31 +68,35 @@ app.on("window-all-closed", () => {
 });
 
 function setMainMenu() {
-    const template = [
-        {
-            label: 'Rayn',
-            submenu: [
-                {
-                    label: 'Quit',
-                    accelerator: 'CmdOrCtrl+Q',
-                    click() {
-                        app.quit();
+    if (process.platform === 'darwin') {
+        const template = [
+            {
+                label: 'Rayn',
+                submenu: [
+                    {
+                        label: 'Quit',
+                        accelerator: 'CmdOrCtrl+Q',
+                        click() {
+                            app.quit();
+                        }
                     }
-                }
-            ]
-        },
-        {
-            label: 'View',
-            submenu: [
-                {
-                    label: 'Toggle Dev Tools',
-                    accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
-                    click(item, focusedWindow) {
-                        focusedWindow.toggleDevTools();
-                    }
-                },
-            ]
-        }
-    ];
-    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+                ]
+            },
+            {
+                label: 'View',
+                submenu: [
+                    {
+                        label: 'Toggle Dev Tools',
+                        accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+                        click(item, focusedWindow) {
+                            focusedWindow.toggleDevTools();
+                        }
+                    },
+                ]
+            }
+        ];
+        Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+    } else {
+        Menu.setApplicationMenu(null);
+    }
 }
