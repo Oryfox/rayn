@@ -44,7 +44,9 @@ export default {
     },
     methods: {
         quit() {
-            electronAPI.quit();
+            if (confirm('Are you sure you want to quit?')) {
+                electronAPI.quit();
+            }
         }
     }
 }
