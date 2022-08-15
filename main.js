@@ -19,9 +19,16 @@ function createWindow() {
 
     win.loadFile("dist/index.html");
     win.on('resized', () => {
-        store.set('width', win.getSize()[0]);
-        store.set('height', win.getSize()[1]);
-        store.set('fullscreen', win.isFullScreen());
+        if (process.platform === 'darwin') {
+            store.set('fullscreen', win.isFullScreen());
+            if (!win.isFullScreen()) {
+                store.set('width', win.getSize()[0]);
+                store.set('height', win.getSize()[1]);
+            }
+        } else {
+            store.set('width', win.getSize()[0]);
+            store.set('height', win.getSize()[1]);
+        }
     });
 }
 
@@ -52,9 +59,7 @@ app.whenReady()
     });
 
 app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") {
-        app.quit();
-    }
+    app.quit();
 });
 
 function setMainMenu() {
