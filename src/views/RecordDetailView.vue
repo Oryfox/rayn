@@ -141,7 +141,7 @@ export default {
       document.getElementById("foreground").classList.toggle("foreground-blur");
     },
     goToArtist() {
-      this.$router.push("/artists/" + this.record.artist);
+      this.$router.push("/artists/" + this.record.artist + "?back");
     },
     selectImage() {
       this.hideContextMenu();
@@ -180,18 +180,7 @@ export default {
       });
     },
     goToYoutubeSearch(song) {
-      ES.youtubeSearch(this.record.artist + " " + song).then((res) => {
-        if (res.ok) {
-          res.json().then((json) => {
-            emitter.emit(
-              "play",
-              json[0].id.videoId,
-              this.record.artist + " - " + song,
-              this.record.id
-            );
-          });
-        }
-      });
+      electronAPI.youtube(this.record.artist + ' ' + song)
     },
     toggleEditModal() {
       if (!document.getElementById("edit-modal").classList.toggle("disabled")) {
@@ -327,16 +316,15 @@ export default {
   transition-duration: 0.5s;
 }
 
-.underline:hover::after,
-.underline:focus::after {
-  transform: translate3d(0, 0, 0);
+.underline:hover::after {
   opacity: 1;
+  width: 106%;
+  left: -3%;
 }
 
 .underline {
   transition-duration: 0.5s;
   cursor: pointer;
-  overflow: hidden;
   position: relative;
   display: block;
   align-self: flex-start;
@@ -345,14 +333,14 @@ export default {
 .underline:after {
   content: "";
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 0.1em;
-  background-color: var(--primary-color);
+  bottom: -3px;
+  left: 50%;
+  width: 0;
+  height: 2px;
   opacity: 0;
-  transition: opacity 300ms, transform 300ms;
-  transform: translate3d(-100%, 0, 0);
+  background-color: var(--color-text);
+  transition-duration: 300ms;
+  border-radius: 2px;
 }
 
 .foreground {
@@ -406,6 +394,7 @@ export default {
 .track {
   display: flex;
   gap: 0.6rem;
+  margin-bottom: 0.6rem;
 }
 
 .track-rank {

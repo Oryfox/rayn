@@ -95,7 +95,7 @@ export default {
         (record) =>
           record.title.toLowerCase().includes(this.search.toLowerCase()) ||
           record.artist.toLowerCase().includes(this.search.toLowerCase())
-      );
+      ).sort((a, b) => b.created - a.created);
     },
   },
   methods: {
@@ -104,7 +104,6 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           this.records = data;
-          console.log(this.records);
         })
         .catch((error) => {
           console.log(error);

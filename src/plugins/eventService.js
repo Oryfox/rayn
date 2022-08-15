@@ -1,6 +1,3 @@
-import router from "../router";
-import Cookies from "js-cookie";
-
 let baseurl = import.meta.env.VITE_HOST;
 
 async function get(uri) {
@@ -52,15 +49,6 @@ export default {
     },
     deleteRecord(id) {
         return hDelete("record?id=" + id)
-    },
-    register(register) {
-        return fetch(baseurl + "user", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(register)
-        })
     },
     getAutoRecord(artist, title) {
         return get("record/auto?artist=" + encodeURI(artist) + "&title=" + encodeURI(title))

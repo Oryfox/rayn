@@ -34,6 +34,7 @@ export default {
   border-radius: 0.5rem;
   transition-duration: 0.3s;
   padding: 0.5rem;
+  margin-bottom: auto;
 }
 
 .base:hover {

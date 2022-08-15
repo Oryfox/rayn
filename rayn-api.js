@@ -5,6 +5,7 @@ const multer = require('multer');
 const upload = multer({ dest: app.getPath('userData') + '/uploads/' });
 const path = require('path');
 const lastFmSecret = 'abf7626b0ae925ff1ed6ba562b64487b';
+const geniusSecret = 'wjNQHPjBEl5R2bQ6OL7uKLoYNnhrylQe7WB1EZhKsFYyIE3dW8cxAV0jM4phAH7G';
 const fetch = require('electron-fetch').default;
 const storage = app.getPath('userData') + '/storage.json'
 const fs = require('fs');
@@ -18,7 +19,7 @@ async function setup() {
 
     app.get("/records", (req, res) => {
         db.find({}, (err, docs) => {
-            res.json(docs);
+            res.send(docs);
         })
     })
 
@@ -82,12 +83,12 @@ async function setup() {
                     artist: album.artist,
                     title: album.name,
                     releaseYear: 1980,
-                    tracks: album.tracks.track.map(t => {
+                    tracks: album.tracks ? album.tracks.track.map(t => {
                         return {
                             title: t.name,
                             rank: t['@attr'].rank
                         }
-                    }),
+                    }) : [],
                     limited: false,
                     bootleg: false,
                     color: 'Black'
@@ -97,8 +98,9 @@ async function setup() {
     })
 
     app.post("/record", (req, res) => {
-        console.log(req.body);
-        db.insert(req.body, (err, newDoc) => {
+        const record = req.body
+        record.created = new Date().getTime()
+        db.insert(record, (err, newDoc) => {
             if (err) {
                 res.status(500).send(err)
             } else {
@@ -127,6 +129,48 @@ async function setup() {
             }
         })
     })
+
+    app.get('/artist', (req, res) => {
+        db.find({}, (err, docs) => {
+            const artists = docs.map(d => d.artist)
+            res.json([...new Set(artists)].sort())
+        })
+    })
+
+    app.get('/artist/:artist', (req, res) => {
+        db.find({ artist: req.params.artist }, (err, docs) => {
+            res.json(docs.sort((a, b) => a.title.localeCompare(b.title)))
+        })
+    })
+
+    app.delete('/artist/:artist/image', (req, res) => {
+        if (fs.existsSync(imagePath + req.params.artist)) {
+            fs.unlinkSync(imagePath + req.params.artist)
+        }
+        res.sendStatus(200);
+    })
+
+    app.get('/artist/:artist/image', (req, res) => {
+        if (fs.existsSync(imagePath + req.params.artist)) {
+            res.sendFile(imagePath + req.params.artist);
+        } else {
+            db.findOne({ artist: req.params.artist }, (err, rDoc) => {
+                fetch('https://api.genius.com/search?q=' + rDoc.artist + (rDoc.tracks && rDoc.tracks[0] && rDoc.tracks[0].title ? ' ' + rDoc.tracks[0].title : ''), {
+                    headers: {
+                        Authorization: 'Bearer ' + geniusSecret
+                    }
+                })
+                    .then(response => response.json())
+                    .then(json => {
+                        downloadFile(
+                            json.response.hits[0].result.primary_artist.image_url, imagePath + req.params.artist)
+                            .then(() => {
+                                res.sendFile(imagePath + req.params.artist)
+                            })
+                    })
+            })
+        }
+    });
 
     app.listen(port, () => {
         console.log(`API started on port ${port}`)

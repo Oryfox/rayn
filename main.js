@@ -1,8 +1,9 @@
-const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, shell } = require("electron");
 const path = require("path");
 const { startAPI } = require("./rayn-api");
 const Store = require("electron-store");
 const store = new Store();
+const fetch = require('electron-fetch').default;
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -29,6 +30,16 @@ app.whenReady()
     .then(() => {
         ipcMain.on("quit", () => {
             app.quit();
+        })
+        ipcMain.on('github', () => {
+            shell.openExternal("https://github.com/Oryfox/rayn")
+        })
+        ipcMain.on('youtube', (event, query) => {
+            fetch("https://yt.oryfox.de/?query=" + query)
+                .then(response => response.json())
+                .then(json => {
+                    shell.openExternal(json[0].url)
+                })
         })
         createWindow();
         setMainMenu();

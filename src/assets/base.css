@@ -33,9 +33,6 @@
     --color-heading: var(--vt-c-text-light-2);
     --color-text: var(--vt-c-text-light-1);
 
-    --primary-color: #d7b9d534;
-    --secondary-color: #F4CAE034;
-
     --section-gap: 160px;
 }
 
@@ -67,7 +64,6 @@ body {
     transition: color 0.5s, background-color 0.5s;
     font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
         Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    font-size: 15px;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

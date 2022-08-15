@@ -1,13 +1,8 @@
 <template>
   <div class="split">
     <div class="list">
-      <ArtistItem
-        v-for="artist in artists"
-        :key="artist"
-        :artist="artist"
-        @click="select(artist)"
-        :selected="selectedArtist === artist"
-      />
+      <ArtistItem v-for="artist in artists" :key="artist" :artist="artist" @click="select(artist)"
+        :selected="selectedArtist === artist" />
     </div>
     <div class="grid">
       <GridItem v-for="record in records" :key="record" :record="record" />
@@ -29,12 +24,16 @@ export default {
       artists: [],
       selectedArtist: null,
       records: [],
+      back: false
     };
   },
   created() {
     this.getArtists();
     if (this.$route.params.name) {
       this.select(this.$route.params.name, true);
+    }
+    if (this.$route.query.back) {
+      this.back = true;
     }
   },
   methods: {
@@ -71,11 +70,17 @@ export default {
 .split {
   display: flex;
 }
+
 .list {
-  height: calc(100vh - 4rem);
+  height: calc(100vh - 3.2rem);
   overflow-y: scroll;
   width: 25rem;
+  border: solid thin var(--color-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background-color: var(--color-background-soft);
 }
+
 .grid {
   display: flex;
   flex-wrap: wrap;
