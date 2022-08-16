@@ -78,7 +78,7 @@ function setMainMenu() {
                 ]
             }
         ];
-        Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+        // Menu.setApplicationMenu(Menu.buildFromTemplate(template));
     } else {
         Menu.setApplicationMenu(null);
     }

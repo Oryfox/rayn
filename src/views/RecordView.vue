@@ -4,10 +4,10 @@
       <label for="order">Order by</label>
 
       <Selector :options="[
-        { type: null, display: 'Unsorted' },
+        { type: null, display: 'Most recent' },
         { type: 'artist', display: 'Artist' },
         { type: 'title', display: 'Title' },
-      ]" :selected="sortby" @change="sort" />
+      ]" :selected="sortby" />
 
       <div class="searchField">
         <label for="searchField"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -71,7 +71,7 @@ export default {
     return {
       records: [],
       sortby: {
-        display: "Unsorted",
+        display: "Most recent",
         type: null,
       },
       error: null,
@@ -95,7 +95,15 @@ export default {
         (record) =>
           record.title.toLowerCase().includes(this.search.toLowerCase()) ||
           record.artist.toLowerCase().includes(this.search.toLowerCase())
-      ).sort((a, b) => b.created - a.created);
+      ).sort((a, b) => {
+        if (this.sortby.type === "artist") {
+          return a.artist.localeCompare(b.artist);
+        } else if (this.sortby.type === "title") {
+          return a.title.localeCompare(b.title);
+        } else {
+          return b.created - a.created;
+        }
+      });
     },
   },
   methods: {
@@ -120,13 +128,6 @@ export default {
           console.log(error);
           this.error = "Could not establish connection to server";
         });
-    },
-    sort() {
-      if (this.sortby.type) {
-        this.getRecordsSorted(this.sortby.type);
-      } else {
-        this.getRecords();
-      }
     },
     toggleNewRecordModal() {
       this.selectVisible = !this.selectVisible;

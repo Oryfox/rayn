@@ -25,7 +25,9 @@ async function setup() {
 
     app.post('/record/image', upload.single('file'), (req, res) => {
         if (req.file.mimetype.startsWith('image/')) {
-            fs.unlinkSync(imagePath + req.query.id)
+            if (fs.existsSync(imagePath + req.query.id)) {
+                fs.unlinkSync(imagePath + req.query.id)
+            }
             fs.renameSync(req.file.path, imagePath + req.query.id)
             res.sendStatus(200);
         } else {
@@ -35,7 +37,15 @@ async function setup() {
 
     app.delete('/record/image', (req, res) => {
         fs.unlinkSync(imagePath + req.query.id)
-        res.sendStatus(200);
+        db.findOne({ _id: req.query.id }, (err, doc) => {
+            if (doc) {
+                doc.nodefault = null;
+                db.update({ _id: req.query.id }, doc, {}, (err, num) => {
+                    res.sendStatus(200);
+                })
+            }
+        });
+        res.sendStatus(404);
     })
 
     app.get('/record/image', (req, res) => {
@@ -44,16 +54,35 @@ async function setup() {
             res.sendFile(imagePath + id);
         } else {
             db.findOne({ _id: id }, (err, rDoc) => {
-                fetch('https://ws.audioscrobbler.com/2.0/?method=album.search&api_key=' + lastFmSecret + '&album=' + rDoc.artist + ' ' + rDoc.title + '&format=json')
-                    .then(response => response.json())
-                    .then(json => {
-                        const images = json.results.albummatches.album[0].image
-                        const imageUrl = images[images.length - 1]['#text']
-                        downloadFile(imageUrl, imagePath + id)
-                            .then(() => {
-                                res.sendFile(imagePath + id)
-                            })
-                    })
+                if (rDoc.nodefault) {
+                    res.sendFile(path.join(__dirname, 'icon.png'))
+                } else {
+                    fetch('https://ws.audioscrobbler.com/2.0/?method=album.search&api_key=' + lastFmSecret + '&album=' + rDoc.artist + ' ' + rDoc.title + '&format=json')
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json();
+                            } else {
+                                throw new Error('No image found');
+                            }
+                        })
+                        .then(json => {
+                            const images = json.results.albummatches.album[0].image
+                            const imageUrl = images[images.length - 1]['#text']
+                            if (images && imageUrl) {
+                                downloadFile(imageUrl, imagePath + id)
+                                    .then(() => {
+                                        res.sendFile(imagePath + id)
+                                    })
+                            } else {
+                                throw new Error("No image found");
+                            }
+                        })
+                        .catch(() => {
+                            rDoc.nodefault = true;
+                            db.update({ _id: id }, rDoc, {}, (err, numReplaced) => { })
+                            res.sendFile(path.join(__dirname, 'icon.png'))
+                        })
+                }
             })
         }
     })

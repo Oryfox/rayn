@@ -121,6 +121,7 @@ export default {
 
         },
         syncImport(data) {
+            data.forEach(r => r.created = r.id);
             data.forEach(async record => {
                 await ES.postRecord(record);
             })
