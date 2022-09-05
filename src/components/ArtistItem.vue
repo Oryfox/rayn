@@ -1,5 +1,5 @@
 <template>
-  <div class="base">
+  <div class="base" ref="self">
     <div class="image-wrapper">
       <img :src="baseUrl + 'artist/' + artist + '/image'" alt="Artist Image" @contextmenu="resetImage"
         ref="artistImage" />
@@ -19,6 +19,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    allowScroll: {
+      type: Boolean,
+      default: false,
+    }
   },
   methods: {
     resetImage() {
@@ -33,6 +37,11 @@ export default {
     return {
       baseUrl: import.meta.env.VITE_HOST,
     };
+  },
+  mounted() {
+    if (this.allowScroll && this.selected) {
+      this.$refs.self.scrollIntoView();
+    }
   },
 };
 </script>

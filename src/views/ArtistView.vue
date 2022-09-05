@@ -2,7 +2,7 @@
   <div class="split">
     <div class="list">
       <ArtistItem v-for="artist in artists" :key="artist" :artist="artist" @click="select(artist)"
-        :selected="selectedArtist === artist" />
+        :selected="selectedArtist === artist" :allowScroll="back" />
     </div>
     <div class="grid">
       <GridItem v-for="record in records" :key="record" :record="record" />
@@ -24,7 +24,7 @@ export default {
       artists: [],
       selectedArtist: null,
       records: [],
-      back: false
+      back: false,
     };
   },
   created() {
@@ -32,7 +32,7 @@ export default {
     if (this.$route.params.name) {
       this.select(this.$route.params.name, true);
     }
-    if (this.$route.query.back) {
+    if (this.$route.query.back !== undefined) {
       this.back = true;
     }
   },
