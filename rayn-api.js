@@ -162,7 +162,9 @@ async function setup() {
     app.get('/artist', (req, res) => {
         db.find({}, (err, docs) => {
             const artists = docs.map(d => d.artist)
-            res.json([...new Set(artists)].sort())
+            res.json([...new Set(artists)].sort((a, b) => {
+                return a.toLowerCase().localeCompare(b.toLowerCase())
+            }))
         })
     })
 
