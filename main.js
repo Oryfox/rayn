@@ -17,7 +17,7 @@ function createWindow() {
 
     win.setFullScreen(store.get('fullscreen') || false);
 
-    win.loadFile("dist/index.html");
+    win.loadFile(path.join(__dirname, 'dist', 'index.html'));
     win.on('resized', () => {
         if (process.platform === 'darwin') {
             store.set('fullscreen', win.isFullScreen());
